@@ -15,17 +15,19 @@ const flatpickrOptions = {
   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
-    let currentTimerTime = convertMs(selectedDates[0] - Date.now());
-    console.log(currentTimerTime);
+    currentSelectedTime = selectedDates;
+    currentDifferenceTime = convertMs(selectedDates[0] - Date.now());
 
-    timerSection.daysEl.textContent = currentTimerTime.days;
-    timerSection.hoursEl.textContent = currentTimerTime.hours;
-    timerSection.minutesEl.textContent = currentTimerTime.minutes;
-    timerSection.secondsEl.textContent = currentTimerTime.seconds;
+    setTimer(currentDifferenceTime);
   },
 };
 
 const setFinalTime = flatpickr('#datetime-picker', flatpickrOptions);
+let currentSelectedTime = null;
+let currentDifferenceTime = null;
+let intervalId = null;
+
+startTimerBtn.addEventListener('click', startTimer);
 
 function convertMs(ms) {
   // Number of milliseconds per unit of time
@@ -44,4 +46,17 @@ function convertMs(ms) {
   const seconds = Math.floor((((ms % day) % hour) % minute) / second);
 
   return { days, hours, minutes, seconds };
+}
+
+function setTimer(timeObj) {
+  timerSection.daysEl.textContent = String(timeObj.days).padStart(2, '0');
+  timerSection.hoursEl.textContent = String(timeObj.hours).padStart(2, '0');
+  timerSection.minutesEl.textContent = String(timeObj.minutes).padStart(2, '0');
+  timerSection.secondsEl.textContent = String(timeObj.seconds).padStart(2, '0');
+}
+
+function startTimer() {
+  intervalId = setInterval(() => {
+    flatpickrOptions.onClose(currentSelectedTime);
+  }, 1000);
 }
