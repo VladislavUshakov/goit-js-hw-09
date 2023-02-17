@@ -1,5 +1,7 @@
 import flatpickr from 'flatpickr';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import 'flatpickr/dist/flatpickr.min.css';
+import 'notiflix/dist/notiflix-3.2.6.min.css';
 
 const startTimerBtn = document.querySelector('[data-start]');
 const timerSection = {
@@ -14,19 +16,25 @@ const flatpickrOptions = {
   time_24hr: true,
   defaultDate: new Date(),
   minuteIncrement: 1,
-  onClose(selectedDates) {
-    currentSelectedTime = selectedDates;
-    currentDifferenceTime = convertMs(selectedDates[0] - Date.now());
 
-    setTimer(currentDifferenceTime);
+  onClose(selectedDates) {
+    if (selectedDates[0] - Date.now() < 0) {
+      Notify.failure('Please choose a date in the future');
+      return;
+    }
+
+    startTimerBtn.disabled = false;
+    currentSelectedDate = selectedDates[0];
   },
 };
 
-const setFinalTime = flatpickr('#datetime-picker', flatpickrOptions);
-let currentSelectedTime = null;
-let currentDifferenceTime = null;
+const chooseTimeInput = document.querySelector('#datetime-picker');
+const chooseTimePicker = flatpickr('#datetime-picker', flatpickrOptions);
+
+let currentSelectedDate = null;
 let intervalId = null;
 
+startTimerBtn.disabled = true;
 startTimerBtn.addEventListener('click', startTimer);
 
 function convertMs(ms) {
@@ -48,15 +56,28 @@ function convertMs(ms) {
   return { days, hours, minutes, seconds };
 }
 
-function setTimer(timeObj) {
-  timerSection.daysEl.textContent = String(timeObj.days).padStart(2, '0');
-  timerSection.hoursEl.textContent = String(timeObj.hours).padStart(2, '0');
-  timerSection.minutesEl.textContent = String(timeObj.minutes).padStart(2, '0');
-  timerSection.secondsEl.textContent = String(timeObj.seconds).padStart(2, '0');
+function setTimer(obj) {
+  timerSection.daysEl.textContent = String(obj.days).padStart(2, '0');
+  timerSection.hoursEl.textContent = String(obj.hours).padStart(2, '0');
+  timerSection.minutesEl.textContent = String(obj.minutes).padStart(2, '0');
+  timerSection.secondsEl.textContent = String(obj.seconds).padStart(2, '0');
 }
 
 function startTimer() {
-  intervalId = setInterval(() => {
-    flatpickrOptions.onClose(currentSelectedTime);
-  }, 1000);
+  if (currentSelectedDate - Date.now() > 0) {
+    startTimerBtn.disabled = true;
+    chooseTimeInput.disabled = true;
+
+    setTimer(convertMs(currentSelectedDate - Date.now()));
+
+    intervalId = setInterval(() => {
+      const currentDifferenceTime = currentSelectedDate - Date.now();
+      if (currentDifferenceTime > 0) {
+        const timerDataObj = convertMs(currentDifferenceTime);
+        setTimer(timerDataObj);
+      } else {
+        clearInterval(intervalId);
+      }
+    }, 1000);
+  }
 }
