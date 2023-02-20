@@ -1,7 +1,6 @@
 import flatpickr from 'flatpickr';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import 'flatpickr/dist/flatpickr.min.css';
-import 'notiflix/dist/notiflix-3.2.6.min.css';
 
 const startTimerBtn = document.querySelector('[data-start]');
 const timerSection = {
@@ -10,7 +9,6 @@ const timerSection = {
   minutesEl: document.querySelector('[data-minutes]'),
   secondsEl: document.querySelector('[data-seconds]'),
 };
-
 const flatpickrOptions = {
   enableTime: true,
   time_24hr: true,
@@ -27,7 +25,6 @@ const flatpickrOptions = {
     currentSelectedDate = selectedDates[0];
   },
 };
-
 const chooseTimeInput = document.querySelector('#datetime-picker');
 const chooseTimePicker = flatpickr('#datetime-picker', flatpickrOptions);
 
@@ -70,14 +67,19 @@ function startTimer() {
 
     setTimer(convertMs(currentSelectedDate - Date.now()));
 
-    intervalId = setInterval(() => {
-      const currentDifferenceTime = currentSelectedDate - Date.now();
-      if (currentDifferenceTime > 0) {
-        const timerDataObj = convertMs(currentDifferenceTime);
-        setTimer(timerDataObj);
-      } else {
-        clearInterval(intervalId);
-      }
-    }, 1000);
+    intervalId = setInterval(doTimerStep, 1000);
+  }
+}
+
+function doTimerStep() {
+  const currentDifferenceTime = currentSelectedDate - Date.now();
+  if (currentDifferenceTime > 0) {
+    const timerDataObj = convertMs(currentDifferenceTime);
+    setTimer(timerDataObj);
+  } else {
+    clearInterval(intervalId);
+    Notify.success('Timer ends');
+    Notify.success('You can set new data');
+    chooseTimeInput.disabled = false;
   }
 }
